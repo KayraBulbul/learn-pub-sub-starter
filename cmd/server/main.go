@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/KayraBulbul/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/KayraBulbul/learn-pub-sub-starter/internal/pubsub"
 	"github.com/KayraBulbul/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -13,6 +14,7 @@ import (
 
 func main() {
 	fmt.Println("Starting Peril server...")
+	gamelogic.PrintServerHelp()
 	connectionString := "amqp://guest:guest@localhost:5672/"
 
 	connection, err := amqp.Dial(connectionString)
@@ -28,9 +30,29 @@ func main() {
 		log.Fatal("error making new channel")
 	}
 
-	err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
-	if err != nil {
-		log.Fatal("error publishing JSON")
+	for {
+		input := gamelogic.GetInput()
+		if len(input) == 0 {
+			continue
+		}
+
+		if input[0] == "pause" {
+			fmt.Println("sending pause message")
+			err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
+			if err != nil {
+				log.Fatal("error publishing JSON")
+			}
+		} else if input[0] == "resume" {
+			fmt.Println("sending resume message")
+			err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
+			if err != nil {
+				log.Fatal("error publishing JSON")
+			}
+		} else if input[0] == "quit" {
+			break
+		} else {
+			fmt.Println("unknown command")
+		}
 	}
 
 	signalChan := make(chan os.Signal, 1)
