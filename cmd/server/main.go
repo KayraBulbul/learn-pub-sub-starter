@@ -30,27 +30,29 @@ func main() {
 		log.Fatal("error making new channel")
 	}
 
+inputLoop:
 	for {
 		input := gamelogic.GetInput()
 		if len(input) == 0 {
 			continue
 		}
 
-		if input[0] == "pause" {
+		switch input[0] {
+		case "pause":
 			fmt.Println("sending pause message")
 			err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
 			if err != nil {
 				log.Fatal("error publishing JSON")
 			}
-		} else if input[0] == "resume" {
+		case "resume":
 			fmt.Println("sending resume message")
 			err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
 			if err != nil {
 				log.Fatal("error publishing JSON")
 			}
-		} else if input[0] == "quit" {
-			break
-		} else {
+		case "quit":
+			break inputLoop
+		default:
 			fmt.Println("unknown command")
 		}
 	}
