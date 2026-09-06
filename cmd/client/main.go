@@ -28,11 +28,21 @@ func main() {
 		log.Fatal("error welcoming client")
 	}
 
-	queueName := fmt.Sprintf("pause.%s", username)
+	pauseQueueName := fmt.Sprintf("pause.%s", username)
 	state := gamelogic.NewGameState(username)
-	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.Transient, handlerPause(state))
+	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilDirect, pauseQueueName, routing.PauseKey, pubsub.Transient, handlerPause(state))
 	if err != nil {
-		log.Fatal("error subscribing to state")
+		log.Fatal("error subscribing to pause queue")
+	}
+
+	channel, err := connection.Channel()
+	if err != nil {
+		log.Fatal("error creating channel")
+	}
+	moveQueueName := fmt.Sprintf("%s.%s", routing.ArmyMovesPrefix, username)
+	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, moveQueueName, "army_moves.*", pubsub.Transient, handlerMove(state))
+	if err != nil {
+		log.Fatal("error subscribing to move queue")
 	}
 
 inputLoop:
@@ -49,11 +59,16 @@ inputLoop:
 				fmt.Println("invalid arguments")
 			}
 		case "move":
-			_, err = state.CommandMove(input)
+			move, err := state.CommandMove(input)
 			if err != nil {
 				fmt.Println("invalid arguments")
 			} else {
-				fmt.Println("army moved!")
+				err = pubsub.PublishJSON(channel, routing.ExchangePerilTopic, moveQueueName, move)
+				if err != nil {
+					fmt.Println("invalid input")
+				} else {
+					fmt.Println("army moved!")
+				}
 			}
 		case "status":
 			state.CommandStatus()
