@@ -24,8 +24,10 @@ func handlerMove(gs *gamelogic.GameState, ch *amqp.Channel) func(gamelogic.ArmyM
 			})
 			if err != nil {
 				fmt.Println("error publishing move")
-			}
 			return pubsub.NackRequeue
+			} else {
+				return pubsub.Ack
+			}
 		default:
 			return pubsub.NackDiscard
 		}
