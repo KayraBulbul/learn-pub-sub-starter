@@ -40,9 +40,13 @@ func main() {
 		log.Fatal("error creating channel")
 	}
 	moveQueueName := fmt.Sprintf("%s.%s", routing.ArmyMovesPrefix, username)
-	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, moveQueueName, "army_moves.*", pubsub.Transient, handlerMove(state))
+	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, moveQueueName, "army_moves.*", pubsub.Transient, handlerMove(state, channel))
 	if err != nil {
 		log.Fatal("error subscribing to move queue")
+	}
+	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, "war", "war.*", pubsub.Durable, handlerConsumeMoves(state))
+	if err != nil {
+		log.Fatal("error subscribing to war queue")
 	}
 
 inputLoop:
