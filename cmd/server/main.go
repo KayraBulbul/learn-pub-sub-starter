@@ -30,6 +30,11 @@ func main() {
 		log.Fatal("error making new channel")
 	}
 
+	_, _, err = pubsub.DeclareAndBind(connection, routing.ExchangePerilTopic, "game_logs", "game_logs.*", pubsub.Durable)
+	if err != nil {
+		log.Fatal("error binding client queue")
+	}
+
 inputLoop:
 	for {
 		input := gamelogic.GetInput()
