@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal("error subscribing to move queue")
 	}
-	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, "war", "war.*", pubsub.Durable, handlerConsumeMoves(state))
+	err = pubsub.SubscribeJSON(connection, routing.ExchangePerilTopic, "war", "war.*", pubsub.Durable, handlerWar(state, channel))
 	if err != nil {
 		log.Fatal("error subscribing to war queue")
 	}
